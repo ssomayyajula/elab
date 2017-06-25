@@ -1,0 +1,78 @@
+{-
+
+-- | Returns the current subgoal
+getGoal :: Elab Sequent
+getGoal = do
+  p <- getHole <$> getProof
+  case fromJust p of
+    Incomplete s _   -> lift $ return s
+    Proof      s _ _ -> lift $ return s
+
+-}
+
+{-
+-- | Like 'qed', but it will generate the term for the current subgoal.
+qed' :: Elab Exp
+qed' = helper <$> getProof where
+  helper = \case
+    Incomplete _ h -> fromQ [| _$h |]
+    Proof _ val ps -> do
+      ts <- for ps helper
+      maybeToExceptT InvalidSubgoals $ val ts
+
+-- | /quod erat demonstrandum/ i.e. the proof is done, so the
+--   elaborator will generate its extract term. If the proof is
+--   incomplete, then there will be typed holes in the term.
+qed :: Elab Exp
+qed = goTop >> qed'
+
+-- | Runs the elaborator on a given computation and returns the
+--   result (either an error or a value) and the associated proof state
+runElab :: Type -> Elab a -> (Either ProofError a, NonEmpty (Zipper Proof))
+runElab t e = $(runStateT . runExceptT . r)
+
+-- | If the current subgoal is incomplete, then its typed hole will be
+--   renamed to the input. Otherwise, it will error out.
+setName :: String -> Elab ()
+setName h = do
+  p <- getHole <$> getProof
+  case fromJust p of
+    Incomplete s _ -> return $ Incomplete s h
+-}
+
+{-
+-- | If the current subgoal's conclusion is A -> B, a subgoal
+--   assuming x' : A (where x' is similar to x but fresh) and
+--   concluding B is added and focused on. x' is returned.
+impliesR :: String -> Elab Name
+impliesR x = do
+  _ :|- c <- getGoal
+  case c of
+    ArrowT `AppT` a `AppT` b -> do
+      x' <- fresh x
+      addSubgoal
+        ([(x', a)] :|- b)
+        (\case [b] -> lift [| \ $x' -> $b |]
+                _  -> invalidSubgoals)
+      return x'
+    _ -> invalidDecomposition
+
+-- | Uses "a" as the input to impliesR.
+impliesR' :: Elab Name
+impliesR' = impliesR "a"
+
+-- | An alias for impliesR for those more comfortable with Idris
+--   and/or Coq
+intro :: Elab Name
+intro = impliesR
+-}
+
+
+toTree = \case
+  Incomplete s n     -> Node (I s n) []
+  Proof      s v sub -> Node (P s v) (toTree <$> sub)
+
+fromTree = \case
+  Node (I s n) []  -> Incomplete s n
+  Node (P s v) sub -> Proof s v (fromTree <$> sub)
+  _                -> error "Malformed proof tree

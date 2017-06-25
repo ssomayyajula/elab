@@ -1,0 +1,39 @@
+name:                elab
+version:             0.1.0.0
+synopsis:            Elaborator reflection for Haskell
+description:         Please see README.md
+homepage:            https://github.com/ssomayyajula/elab
+license:             BSD3
+license-file:        LICENSE
+author:              Siva Somayyajula
+maintainer:          sks266@cornell.edu
+copyright:           2017 Siva Somayyajula
+category:            Language
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Language.Haskell.Elab
+  other-modules:       Language.Haskell.Elab.Internal.Proof
+  build-depends:       base >= 4.9 && < 5
+                     , template-haskell >= 2.11 && < 3
+                     , transformers >= 0.5 && < 1
+                     , mtl >= 2.2 && < 3
+                     , containers >= 0.5 && < 1
+                     , rosezipper >= 0.2 && < 1
+  default-language:    Haskell2010
+
+test-suite elab-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , elab
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/ssomayyajula/elab
